@@ -1,0 +1,323 @@
+#Data Project
+#Survivor Data Set
+
+The article by the contributors of the dataset titled “Surviving Racism and Sexism: What Votes in the Television Program Survivor Reveal About Discrimination” will provide insights on some of the information we are looking at in a broader sense, and we will be honing in on the different aspects that affect someone’s ability to make it far in the competition.
+
+The article “Survival of the Stereotypical: A Study of Personal Characteristics and Order of Elimination on Reality Television” delves into the impact of reality television programs on perpetuating cultural stereotypes, particularly concerning personal characteristics such as age, gender, and race. The authors argue that reality TV, with its emphasis on competition and elimination, often reinforces existing stereotypes and cultural assumptions. By analyzing the content of popular reality TV programs like Survivor, The Apprentice, and American Idol, the authors aim to uncover patterns in contestant selection and elimination. They argue that these programs not only entertain but also influence viewers' perceptions and attitudes toward individuals based on group characteristics. It suggests that reality TV producers often exploit cultural differences and stereotypes to create engaging storylines and generate higher viewership.
+
+We plan to use the data from the first article and explore some of the hypotheses made in the second one, along with diving further into age and sexuality which were not really explored in the papers.
+
+-----------------------------------------------------------------------------
+ Name                         Description
+ ---------------------------- -----------------------------------------------
+ `Data`                       Contestants id number starting at 101
+ 
+ `lastname`                   The last name of the contestant
+ 
+ `firstname`                  The first name of the contestant
+ 
+ `age`                        The age of the contestant
+ 
+ `sex`                        Gender of the contestant ('f' = female, 'm' = male)
+ 
+ `race`                       The race of the contestant segmented into (
+                              "white", "black", "hispanic or latino/a", 
+                              "native american", "Asian" , or a combination of them)
+                              
+ `lgbtq`                      The sexuality of the contestant denoted by "yes" 
+                              or "no" for if they were lgbtq
+                              
+ `seasnum`                    The season number the contestant participated in
+ 
+ `startingtribe`              The first tribe the contestant was a part of
+ 
+ `exittribe`                  The tribe the contestant was in when they were eliminated/left
+  
+ `orderout`                   The order they were removed from the show
+ 
+ `finishplace`                The placement the contestant got that season
+ 
+ `trustworthy`                Rating on a scale of 1-5 on their trustworthiness
+ 
+ `loyal`                      Rating on a scale of 1-5 on their loyalty
+ 
+ `smart_intel`                Rating on a scale of 1-5 on their intelligence
+ 
+ `phys_attr`                  Rating on a scale of 1-5 on their attractiveness
+ 
+ `phys_strong`                Rating on a scale of 1-5 on their strength
+ 
+ `ego_selfcent`               Rating on a scale of 1-5 on their self-centeredness
+ 
+ `hardworking`                Rating on a scale of 1-5 on their work rate
+ 
+ `bossy`                      Rating on a scale of 1-5 on their bossiness
+ 
+ `fake_phony`                 Rating on a scale of 1-5 on their phoniness
+ 
+ `mischievous`                Rating on a scale of 1-5 on their mischievousness
+-----------------------------------------------------------------------------
+Note: There are also some variables related to the gender, sexuality, and race
+of the tribes which we may want to look into more. Also `trustworthy` to `mischievous` are more or less guesses on how I think the data is interpreted but I cannot find it written anywhere
+
+## 1. 
+Out of all characteristics, what are the mean ratings among finalists? How does this compare to the mean ratings of all contestants Does it seem to pay off to be more cheap and self centered or is it better in the long run to work in a group?
+
+```{r}
+
+#And one more thing – you need to give readers a lot more detail about these ratings. Who collected the ratings? How many individuals rated each contestant? How were the rater recruited? How were the ratings made? I.e., did the raters just see a photo of the contestants, or did they watch episodes of the show? All these things matter for how we interpret this data and what we can learn from it
+
+survivor <- read.csv("survivordata.csv")
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+
+finalists <- survivor %>%
+  filter(finishplace %in% c(1,2,3))
+nonfinalists <- survivor %>%
+  filter(finishplace > 3)
+
+#Finalists
+mean_ratings_finalists <- finalists %>%
+  summarise(
+    MeanTrustworthy = mean(trustworthy, na.rm = TRUE),
+    MeanLoyal = mean(loyal, na.rm = TRUE),
+    MeanSmartIntel = mean(smart_intel, na.rm = TRUE), 
+    MeanPhysAttr = mean(phys_attr, na.rm = TRUE),
+    MeanPhysStrong = mean(phys_strong, na.rm = TRUE),
+    MeanSelfCentered = mean(ego_selfcent, na.rm = TRUE),
+    MeanHardworking = mean(hardworking, na.rm = TRUE),
+    MeanBossy = mean(bossy, na.rm = TRUE),
+    MeanFake = mean(fake_phony, na.rm = TRUE),
+    MeanMischievous = mean(mischievous, na.rm = TRUE)
+  )
+mean_ratings_finalists
+
+#Not Finalists
+mean_ratings_nonfinalists <- nonfinalists %>%
+  summarise(
+    MeanTrustworthy = mean(trustworthy, na.rm = TRUE),
+    MeanLoyal = mean(loyal, na.rm = TRUE),
+    MeanSmartIntel = mean(smart_intel, na.rm = TRUE), 
+    MeanPhysAttr = mean(phys_attr, na.rm = TRUE),
+    MeanPhysStrong = mean(phys_strong, na.rm = TRUE),
+    MeanSelfCentered = mean(ego_selfcent, na.rm = TRUE),
+    MeanHardworking = mean(hardworking, na.rm = TRUE),
+    MeanBossy = mean(bossy, na.rm = TRUE),
+    MeanFake = mean(fake_phony, na.rm = TRUE),
+    MeanMischievous = mean(mischievous, na.rm = TRUE)
+  )
+mean_ratings_nonfinalists
+
+mean_comparison <- bind_rows(mean_ratings_finalists, mean_ratings_nonfinalists, .id = "Group") %>%
+  mutate(Group = ifelse(Group == "1", "Finalists", "Non-Finalists")) %>%
+  gather(Characteristic, MeanRating, -Group)
+
+ggplot(mean_comparison, aes(x = Characteristic, y = MeanRating, fill = Group)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(title = "Mean Ratings Among Finalists vs. Non-Finalists",
+       x = "Characteristic", y = "Mean Rating") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+*Explanation*
+From the mean ratings, finalists aren't particularly skilled at anything, the means for finalists are just barely higher than the means for all contestants, which shows that the characteristics may not play a major role in comparison. The only attributes with lower means among finalists in comparison to all contestants are mischeiviousness, Self-centeredness and Physical Attractiveness which may be considered either intimidating or negative attributes for contestants to have. This emphasizes the very little impact characteristics outside of race which was already found to be an impact trait of those who finalize in Survivor. This also allows us to eliminate any possible confounds when testing our hypothesis of the importance of sexuality and age for contestants to reach finals.
+
+## 2. 
+Is there any major differences in certain age groups and sexuality reaching the finals?
+```{r}
+#control for race and age
+
+# it’s interesting you don’t see significant effects of either variable (this is likely why the original authors didn’t say much about these particular variables). But it would also be good to fit a multiple regression predicting finish place from both lgbt status and age at the same time. Additionally, it would be good to also include contestants’ race and gender in this model as well (you don’t need to make these the focus, but given that these variables – race and gender – were previously found to be associated with success on survivor you can just say that you want to control for them, while your main focus is on lgbtq status and age). 
+
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+survivor$finalist <- ifelse(survivor$finishplace <= 3, 1, 0)
+
+multiple_model <- lm(finalist ~ lgbtq + age , data = survivor)
+summary(multiple_model)
+
+survivor_data <- survivor %>%
+  mutate(finalist = ifelse(finishplace <= 3, 1, 0)) %>%
+  mutate(lgbtq_count = as.numeric(lgbtq == "yes"))
+
+lgbtq_model <- lm(finalist ~ lgbtq, data = survivor)
+summary(lgbtq_model)
+
+finalists_by_lgbtq <- survivor_data %>%
+  group_by(sexuality_group = ifelse(lgbtq_count == 1, "LGBTQ", "Straight")) %>%
+  summarise(
+    Total = n(),
+    Finalists = sum(finalist),
+    Percentage = (sum(finalist) / n()) * 100
+  )
+
+finalists_by_lgbtq
+
+#fit another model predicting finalist status from these variables as categorical predictors? You can use age category as predictor in a lm() model, we’ve done this many times converting categorical variables to dummies in order to fit models. Then you will have significance tests for everything – at the moment your analysis is lacking this. But if you do this, I recommend changing the age variable to have fewer age categories than what you currently have. Maybe just three categories representing young adults, middle aged adults, and older adults would be enough (you can decide on the exact boundaries and number of categories you want here, just make them reasonable, and no more than four).
+
+
+survivor$age_group <- cut(survivor$age, breaks = c(0, 29, 49, 100),
+                          labels = c("Young Adults", "Middle-aged Adults", "Older Adults"),
+                          right = FALSE)
+
+finalist_model <- lm(finalist ~ age_group, data = survivor)
+summary(finalist_model)
+
+finalists_by_age <- survivor %>%
+  group_by(age_group) %>%
+  summarise(
+    Total = n(),
+    Finalists = sum(finalist),
+    Percentage = (sum(finalist) / n()) * 100
+  )
+
+finalists_by_age
+
+fit <- lm(finalist ~ age_group*lgbtq, data = survivor)
+summary(fit)
+
+```
+*Explanation*
+For LGBTQ finalists there have been 6 total out of only 50 contestants which is 12% and a relatively small sample size in comparison to 114 finalists out of 681 non-lgbtq contestants, which is 16.7%. For age groups there has never been a finalist under the age of 20, but every other age group has at least 1 finalist. With the highest percentage being 70-100 with 1 of 3 contestants making the final, but factoring in sample size it seems 40-49 & 50-59 year old have a slight advantage with a 19.5% & 20% chance to make the finals respectively. From this data there does not seem to be much of a advantage/disadvantage based on sexuality and age.
+
+## 3.
+On average according to sexuality and age where do contestants place at the end of the season?
+```{r}
+
+#just run models predicting finish place from categorical predictors? This would show exactly the same thing, but enable you to test the significance of differences. 
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+survivor$lgbtq <- as.factor(survivor$lgbtq)
+
+
+survivor <- survivor[complete.cases(survivor$age), ]
+
+
+survivor$lgbtq_count <- as.numeric(survivor$lgbtq == "yes")
+
+survivor$age_group <- cut(survivor$age, breaks=c(0, 29, 49, 100),
+                          labels=c("Young Adults", "Middle-aged Adults", "Older Adults"),
+                          right=FALSE)
+
+mean_finish_by_age <- aggregate(finishplace ~ age_group, data=survivor, FUN=mean)
+
+ggplot(mean_finish_by_age, aes(x = age_group, y = finishplace)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  geom_text(aes(label = round(finishplace, 2)), vjust = -0.5, color = "black") +
+  labs(title = "Mean Finish Age for Each Age Group",
+       x = "Age Group", y = "Mean Finish Age") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+survivor$sexuality_group <- cut(survivor$lgbtq_count, breaks=c(-Inf, 0.5, Inf),
+                                labels=c("straight", "lgbtq"),
+                                right=TRUE)
+
+mean_finish_by_sexuality <- aggregate(finishplace ~ sexuality_group, data = survivor, FUN = mean)
+
+ggplot(mean_finish_by_sexuality, aes(x = sexuality_group, y = finishplace)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  geom_text(aes(label = round(finishplace, 1)), vjust = -0.5, color = "black") +
+  labs(title = "Mean Finish by Sexuality Group",
+       x = "Sexuality Group", y = "Mean Finish Place") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+*Explanation*
+From the linear models and the mean placements it can be seen that there is not much of an advantage/disadvantage whether contestants are lgbtq or not and based on their age groups. For age groups, contestants finish in a slightly better than other age groups. Surprisingly the age group 70 to 100 has the best finish place mean, but there have only been 3 contestants on the show (2 being 72, and 1 being 75), so it cannot be assumed that the average placement of any and all 70-100 year old would be as good as the data suggests. outside of averages lgbtq contestants have about half the chance of becoming a finalist as straight contestants. 
+
+
+
+## 4.
+Look into how how age and sexuality has been represented over seasons. Have there been more lgbtq in more recent seasons? Has the average age of contestants changed over seasons?
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+survivor$age_group <- cut(survivor$age, 
+                          breaks = c(0, 19, 29, 39, 49, 59, 69, 100),
+                          labels = c("1-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70+"),
+                          right = FALSE)
+
+
+age_distribution <- survivor %>%
+  group_by(seasnum, age_group) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  mutate(total = sum(count, na.rm = TRUE)) %>%
+  mutate(proportion = count / total)
+age_distribution
+
+lgbtq_distribution <- survivor %>%
+  group_by(seasnum) %>%
+  summarise(LGBTQ_count = sum(lgbtq_count, na.rm = TRUE), total = n(), .groups = 'drop') %>%
+  mutate(LGBTQ_proportion = LGBTQ_count / total)
+lgbtq_distribution
+
+age_trends <- lm(proportion ~ seasnum, data = age_distribution)
+age_trends
+
+lgbtq_trends <- lm(LGBTQ_proportion ~ seasnum, data = lgbtq_distribution)
+lgbtq_trends
+
+
+ggplot(lgbtq_distribution, aes(x = seasnum, y = LGBTQ_proportion)) +
+  geom_line() +
+  labs(title = "Trend of LGBTQ Representation Across Seasons",
+       x = "Season Number",
+       y = "Proportion of LGBTQ Contestants") +
+  geom_smooth(method = "lm", color="red", se = F)
+  theme_minimal()
+
+
+#Age stuff
+mean_age_by_season <- survivor %>%
+  group_by(seasnum) %>%
+  summarise(mean_age = mean(age, na.rm = TRUE))
+ggplot(mean_age_by_season, aes(x = seasnum, y = mean_age)) +
+  geom_line(group=1, color="black") +
+  geom_point(color="blue") +
+  geom_smooth(method = "lm", color="red", se = F) +  
+  labs(title = "Mean Age of Contestants Across Seasons with Trend Line",
+       x = "Season Number",
+       y = "Mean Age") +
+  theme_minimal()
+
+```
+Over the seasons there has been a higher proportion of LGBTQ contestants on average, but there are a lot of highs and lows over the seasons. The data is not incredibly sufficient in showing the increase because even after the increased average, there is not a huge difference in the total number of LGBTQ contestants in a season because it is only between 0-3 every season. For age, the average age of contestants has slightly trended downwards over the seasons. But over 40 seasons the average age has more or less consistently sat around 33 years old and there are seasons with drastic jumps in ages, but for the most part they sit in the 30-37 year old range.
+
+ 5. Do men who identify as lgbtq become finalists more or less than women who identify as lgbtq? 
+
+```{r}
+library(ggplot2)
+trek <- lm(finalist ~ lgbtq * gender , data = survivor)
+summary(trek)
+
+survivor$predicted <- predict(trek, type = "response")
+
+ggplot(survivor, aes(x = gender, y = predicted, fill = lgbtq)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(title = "Predicted Probability of Becoming a Finalist by Gender and LGBTQ Status",
+       x = "Gender",
+       y = "Predicted Probability",
+       fill = "LGBTQ Status") +
+  theme_minimal()
+
+#gender and sexuality model
+
+
+
+
+```
+
+*Explanation*
+ By using a multiple regression interaction model, we looked at the interaction between gender and sexuality. The intercept of 0.163324 quantitatively represents the base probability that a non-LGBTQ female will become a finalist. This estimate is statistically highly significant, with a p-value of 9.55e-16. The coefficient for LGBTQ status, denoted as lgbtqyes and valued at -0.096657, indicates a lower likelihood of LGBTQ individuals, as compared to non-LGBTQ counterparts of the same gender, reaching finalist status. However, the non-significant p-value of 0.324 suggests this predictor does not significantly impact the model. Similarly, the coefficient for gender (genderm = 0.008882) implies a marginal increase in the probability of males becoming finalists compared to females, but this too lacks statistical significance with a p-value of 0.755.
+
+Furthermore, the interaction term lgbtqyes:genderm, with a value of 0.067309, explores the specific impact of being an LGBTQ male relative to the baseline group of non-LGBTQ females. This coefficient, although indicating a positive effect, does not achieve statistical significance, as reflected by a p-value of 0.569. Collectively, these findings, including the analysis of residuals ranging broadly from -0.1722 to 0.9333, suggest that there is no evidence of discrimination based on gender or sexuality affecting the likelihood of contestants reaching the finals, as the model does not demonstrate significant variability in finalist outcomes based on these predictors. 
